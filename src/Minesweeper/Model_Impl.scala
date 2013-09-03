@@ -119,7 +119,7 @@ case class MineSquare
   def Status = _status
   def Status_= (status: Model.MineSquareStatus.type) { _status = status }
   
-  private[this] var _isActivated =  false
+  private[this] var _isActivated = false
   def IsActivated = _isActivated
   def IsActivated_= (isActivated: Boolean) { _isActivated = isActivated }
 }
