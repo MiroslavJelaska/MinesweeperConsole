@@ -1,13 +1,10 @@
-import Minesweeper.Model
+import Minesweeper.Model.Impl._
 
 object Main extends App {
-  var mf = new Minesweeper.Model.Impl.Minefield (
-        numberOfRows    = 8,
-        numberOfColumns = 8,
-        numberOfMines   = 12
-    )
+  var game = new Game()
   
-  mf.PrintCovered()
-  println("========================")
-  mf.PrintUncovered()
+  game.StartNewGame((8, 8), 10)
+  game.MakeMove((1,2), 'R')
+  game.MakeMove((1,4), 'R')
+  game.Print()
 }

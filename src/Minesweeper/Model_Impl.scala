@@ -17,7 +17,6 @@ class Game
     
 )
 {
-   // How to make it better
     private var _minefield: Option[Minesweeper.Model.Impl.Minefield] = None
     
     def StartNewGame(dimensions: (Int, Int), numberOfMines: Int): Unit =
@@ -29,13 +28,33 @@ class Game
       ))
     }
     
+    def MakeMove(location: (Int, Int), click: Char) =
+    {
+      require(!_minefield.isEmpty)
+      require(click == 'L' || click == 'R')
+      
+      val move =  new Move(
+          Row        = location._1,
+          Column     = location._2,
+          MouseClick = click match {
+              case 'L' => Model.MouseClick.Left
+              case 'R' => Model.MouseClick.Right
+            }
+      )
+      _minefield.get.MakeMove(move)
+    }
+    
     def Print(): Unit =
     {
       require(!_minefield.isEmpty)
       
-      
+      _minefield.get.Print()
     }
     
+    def EndGame()
+    {
+      _minefield = None
+    }
 }
 
 class Minefield
@@ -75,6 +94,44 @@ class Minefield
   
   def IsAnyMineActivated = _fields.exists(row => row.exists(mineSquare => mineSquare.IsActivated))
   
+  def MakeMove(move: Move)
+  {
+    require(!IsAnyMineActivated)
+    //If it's Revealed don't do nothing
+    if(! (_fields(move.Row)( move.Column).Status == Model.MineSquareStatus.Revealed))
+    {
+      if(move.MouseClick == Model.MouseClick.Left)
+      {
+        leftClick(move.Row, move.Column)
+      }
+      else
+      {
+        rightClick(move.Row, move.Column)
+      }
+    }
+    
+    
+    def leftClick(row: Int, column: Int)
+    {
+      
+    }
+    def rightClick(row: Int, column: Int)
+    {
+      _fields(move.Row)( move.Column).Status match
+      {
+        case status 
+            if status == Model.MineSquareStatus.Concealed
+                => _fields(move.Row)(move.Column).Status_=(Model.MineSquareStatus.Flagged)
+        case status 
+            if status == Model.MineSquareStatus.Flagged
+                => _fields(move.Row)(move.Column).Status_=(Model.MineSquareStatus.Questioned)
+        case status 
+            if status == Model.MineSquareStatus.Questioned
+                => _fields(move.Row)(move.Column).Status_=(Model.MineSquareStatus.Concealed)
+      }
+    }
+  }
+  
   def Print():Unit =
   {
     if (!IsAnyMineActivated) 
@@ -94,14 +151,14 @@ class Minefield
           row.flatMap(
             _ match {
               case mineSquare
+                  if mineSquare.Status == Model.MineSquareStatus.Flagged
+                      => Model.AsciiMap("Flagged")
+              case mineSquare
                   if mineSquare.Status == Model.MineSquareStatus.Concealed
                       => Model.AsciiMap("Concealed")
               case mineSquare
                   if mineSquare.Status == Model.MineSquareStatus.Revealed
                       => Model.AsciiMap("Revealed")
-              case mineSquare
-                  if mineSquare.Status == Model.MineSquareStatus.Flagged
-                      => Model.AsciiMap("Flagged")
               case mineSquare
                   if mineSquare.Status == Model.MineSquareStatus.Questioned
                       => Model.AsciiMap("Questioned")
