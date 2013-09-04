@@ -2,26 +2,25 @@ package Minesweeper
 
 package object Model
 {
-
   object MineSquareStatus extends Enumeration 
   {
     type MineSquareStatus = Value
     
-    val Concealed,
-        Revealed,
-        Flagged,
-        Questioned,
-        Activated   = MineSquareStatus
+    val Concealed  = Value("Concealed" )
+    val Revealed   = Value("Revealed"  )
+    val Flagged    = Value("Flagged"   )
+    val Questioned = Value("Questioned")
+    val Activated  = Value("Activated" )
   }
   
   object MouseClick extends Enumeration 
   {
     type MouseClick = Value
     
-    val Left,
-        Right = MouseClick
+    val Left  = Value("Left" )
+    val Right = Value("Right")
   }
-
+  
   val AsciiMap = Map(
     "Mine"                -> "+",
     "Activated"           -> "*",

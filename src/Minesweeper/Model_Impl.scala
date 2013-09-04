@@ -1,12 +1,12 @@
 package Minesweeper.Model.Impl
 
-import Minesweeper.Model;
+import Minesweeper.Model
 
 case class Move
 (
   Row:        Int,
   Column:     Int,
-  MouseClick: Model.MouseClick.type
+  MouseClick: Model.MouseClick.Value
 )
 {
   
@@ -97,8 +97,10 @@ class Minefield
   def MakeMove(move: Move)
   {
     require(!IsAnyMineActivated)
-    //If it's Revealed don't do nothing
-    if(! (_fields(move.Row)( move.Column).Status == Model.MineSquareStatus.Revealed))
+    require(0 <= move.Row    && move.Row    < numberOfRows    )
+    require(0 <= move.Column && move.Column < numberOfColumns )
+
+    if(! (_fields(move.Row)(move.Column).Status == Model.MineSquareStatus.Revealed))
     {
       if(move.MouseClick == Model.MouseClick.Left)
       {
@@ -113,7 +115,65 @@ class Minefield
     
     def leftClick(row: Int, column: Int)
     {
-      
+      _fields(move.Row)( move.Column) match
+      {
+        case mineSquare 
+            if mineSquare.HasMine
+                => {
+                  _fields(move.Row)(move.Column).IsActivated_=(true)
+                  _fields(move.Row)(move.Column).Status_=(Model.MineSquareStatus.Activated)
+                }
+        case mineSquare
+            if !mineSquare.HasMine
+                => {
+                  var concealedList = (new Tuple2(move.Row, move.Column)) :: Nil
+                  
+                  while(!concealedList.isEmpty)
+                  {
+                    val last = concealedList.last
+                    _fields(last._1)(last._2).Status_=(Model.MineSquareStatus.Revealed)
+                    
+                    concealedList = concealedList.init
+                    
+                    // Up
+                    if(last._1 != 0)
+                    {
+                      if(!_fields(last._1 - 1)(last._2).HasMine &&
+                          _fields(last._1 - 1)(last._2).Status == Model.MineSquareStatus.Concealed)
+                      {
+                            concealedList ::= (last._1 - 1, last._2)
+                      }
+                    }
+                    // Right
+                    if(last._2 != (numberOfColumns - 1))
+                    {
+                      if(!_fields(last._1)(last._2 + 1).HasMine &&
+                          _fields(last._1)(last._2 + 1).Status == Model.MineSquareStatus.Concealed)
+                      {
+                        concealedList ::= (last._1, last._2 + 1)
+                      }
+                    }
+                    // Down
+                    if(last._1 != (numberOfRows - 1))
+                    {
+                      if(!_fields(last._1 + 1)(last._2).HasMine &&
+                          _fields(last._1 + 1)(last._2).Status == Model.MineSquareStatus.Concealed)
+                      {
+                        concealedList ::= (last._1 + 1, last._2)
+                      }
+                    }
+                    // Left
+                    if(last._2 != 0)
+                    {
+                      if(!_fields(last._1)(last._2 - 1).HasMine &&
+                          _fields(last._1)(last._2 - 1).Status == Model.MineSquareStatus.Concealed)
+                      {
+                        concealedList ::= (last._1, last._2 - 1)
+                      }
+                    }
+                  }
+                }
+      }
     }
     def rightClick(row: Int, column: Int)
     {
@@ -174,11 +234,11 @@ class Minefield
           row.flatMap(
             _ match {
               case mineSquare 
-                  if mineSquare.HasMine
-                      => Model.AsciiMap("Mine")
-              case mineSquare 
                   if mineSquare.IsActivated
                       => Model.AsciiMap("Activated")
+              case mineSquare 
+                  if mineSquare.HasMine
+                      => Model.AsciiMap("Mine")
               case mineSquare
                   if mineSquare.Status == Model.MineSquareStatus.Concealed
                       => Model.AsciiMap("Concealed")
@@ -186,13 +246,13 @@ class Minefield
                   if mineSquare.Status == Model.MineSquareStatus.Revealed
                       => Model.AsciiMap("Revealed")
               case mineSquare 
-                  if mineSquare.HasMine && mineSquare.Status == Model.MineSquareStatus.Flagged
+                  if mineSquare.HasMine && (mineSquare.Status == Model.MineSquareStatus.Flagged)
                       => Model.AsciiMap("FlaggedAndHasMine")
               case mineSquare
                   if mineSquare.Status == Model.MineSquareStatus.Flagged
                       => Model.AsciiMap("Flagged")
               case mineSquare
-                  if mineSquare.HasMine && mineSquare.Status == Model.MineSquareStatus.Questioned
+                  if mineSquare.HasMine && (mineSquare.Status == Model.MineSquareStatus.Questioned)
                       => Model.AsciiMap("QuestionedAndIsMine")
               case mineSquare
                   if mineSquare.Status == Model.MineSquareStatus.Questioned
@@ -211,7 +271,7 @@ case class MineSquare
 {
   private[this] var _status = Model.MineSquareStatus.Concealed
   def Status = _status
-  def Status_= (status: Model.MineSquareStatus.type) { _status = status }
+  def Status_= (status: Model.MineSquareStatus.Value) { _status = status }
   
   private[this] var _isActivated = false
   def IsActivated = _isActivated
