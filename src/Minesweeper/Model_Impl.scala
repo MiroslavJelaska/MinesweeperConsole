@@ -49,7 +49,7 @@ class Minefield
   
   def IsAnyMineActivated = _fields.exists(row => row.exists(mineSquare => mineSquare.IsActivated))
   
-  def PrintCovered(): Unit = {
+  def PrintCovered  (): Unit = {
     _fields.foreach(
       row => 
         (println(
@@ -72,7 +72,6 @@ class Minefield
       ))
     )
   }
-  
   def PrintUncovered(): Unit = {
     _fields.foreach(
       row => 
