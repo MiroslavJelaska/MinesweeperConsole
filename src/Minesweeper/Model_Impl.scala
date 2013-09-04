@@ -8,14 +8,9 @@ case class Move
   Column:     Int,
   MouseClick: Model.MouseClick.Value
 )
-{
-  
-}
+
 
 class Game
-(
-    
-)
 {
     private var _minefield: Option[Minesweeper.Model.Impl.Minefield] = None
     
@@ -125,54 +120,59 @@ class Minefield
                 }
         case mineSquare
             if !mineSquare.HasMine
-                => {
-                  var concealedList = (new Tuple2(move.Row, move.Column)) :: Nil
-                  
-                  while(!concealedList.isEmpty)
-                  {
-                    val last = concealedList.last
-                    _fields(last._1)(last._2).Status_=(Model.MineSquareStatus.Revealed)
-                    
-                    concealedList = concealedList.init
-                    
-                    // Up
-                    if(last._1 != 0)
-                    {
-                      if(!_fields(last._1 - 1)(last._2).HasMine &&
-                          _fields(last._1 - 1)(last._2).Status == Model.MineSquareStatus.Concealed)
-                      {
-                            concealedList ::= (last._1 - 1, last._2)
-                      }
-                    }
-                    // Right
-                    if(last._2 != (numberOfColumns - 1))
-                    {
-                      if(!_fields(last._1)(last._2 + 1).HasMine &&
-                          _fields(last._1)(last._2 + 1).Status == Model.MineSquareStatus.Concealed)
-                      {
-                        concealedList ::= (last._1, last._2 + 1)
-                      }
-                    }
-                    // Down
-                    if(last._1 != (numberOfRows - 1))
-                    {
-                      if(!_fields(last._1 + 1)(last._2).HasMine &&
-                          _fields(last._1 + 1)(last._2).Status == Model.MineSquareStatus.Concealed)
-                      {
-                        concealedList ::= (last._1 + 1, last._2)
-                      }
-                    }
-                    // Left
-                    if(last._2 != 0)
-                    {
-                      if(!_fields(last._1)(last._2 - 1).HasMine &&
-                          _fields(last._1)(last._2 - 1).Status == Model.MineSquareStatus.Concealed)
-                      {
-                        concealedList ::= (last._1, last._2 - 1)
-                      }
-                    }
-                  }
-                }
+                => floodFillForRevealingSquares(
+                      startingSquareLocation = (move.Row, move.Column)
+                   )
+      }
+      
+      def floodFillForRevealingSquares(startingSquareLocation: (Int, Int))
+      {
+        var concealedList = (new Tuple2(startingSquareLocation._1, startingSquareLocation._2)) :: Nil
+        
+        while(!concealedList.isEmpty)
+        {
+          val last = concealedList.last
+          _fields(last._1)(last._2).Status_=(Model.MineSquareStatus.Revealed)
+          
+          concealedList = concealedList.init
+          
+          // Up
+          if(last._1 != 0)
+          {
+            if(!_fields(last._1 - 1)(last._2).HasMine &&
+                _fields(last._1 - 1)(last._2).Status == Model.MineSquareStatus.Concealed)
+            {
+              concealedList ::= (last._1 - 1, last._2)
+            }
+          }
+          // Right
+          if(last._2 != (numberOfColumns - 1))
+          {
+            if(!_fields(last._1)(last._2 + 1).HasMine &&
+                _fields(last._1)(last._2 + 1).Status == Model.MineSquareStatus.Concealed)
+            {
+              concealedList ::= (last._1, last._2 + 1)
+            }
+          }
+          // Down
+          if(last._1 != (numberOfRows - 1))
+          {
+            if(!_fields(last._1 + 1)(last._2).HasMine &&
+                _fields(last._1 + 1)(last._2).Status == Model.MineSquareStatus.Concealed)
+            {
+              concealedList ::= (last._1 + 1, last._2)
+            }
+          }
+          // Left
+          if(last._2 != 0)
+          {
+            if(!_fields(last._1)(last._2 - 1).HasMine &&
+                _fields(last._1)(last._2 - 1).Status == Model.MineSquareStatus.Concealed)
+            {
+              concealedList ::= (last._1, last._2 - 1)
+            }
+          }
+        }
       }
     }
     def rightClick(row: Int, column: Int)
@@ -196,15 +196,15 @@ class Minefield
   {
     if (!IsAnyMineActivated) 
     {
-      PrintCovered()
+      _printCovered()
     }
     else 
     {
-      PrintUncovered() 
+      _printUncovered() 
     }
   }
-  // TODO: Make private
-  def PrintCovered  (): Unit = {
+  
+  private def _printCovered  (): Unit = {
     _fields.foreach(
       row => 
         (println(
@@ -227,7 +227,7 @@ class Minefield
       ))
     )
   }
-  def PrintUncovered(): Unit = {
+  private def _printUncovered(): Unit = {
     _fields.foreach(
       row => 
         (println(
