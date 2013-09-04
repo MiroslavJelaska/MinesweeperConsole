@@ -52,6 +52,7 @@ class Game
     }
 }
 
+
 class Minefield
 (
   numberOfRows:    Int,
@@ -124,6 +125,7 @@ class Minefield
                       startingSquareLocation = (move.Row, move.Column)
                    )
       }
+      
       
       def floodFillForRevealingSquares(startingSquareLocation: (Int, Int))
       {
@@ -263,6 +265,7 @@ class Minefield
     )
   }
 }
+
 
 case class MineSquare
 (
