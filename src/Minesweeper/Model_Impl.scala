@@ -12,6 +12,32 @@ case class Move
   
 }
 
+class Game
+(
+    
+)
+{
+   // How to make it better
+    private var _minefield: Option[Minesweeper.Model.Impl.Minefield] = None
+    
+    def StartNewGame(dimensions: (Int, Int), numberOfMines: Int): Unit =
+    {
+      _minefield = Some(new Minesweeper.Model.Impl.Minefield(
+        numberOfRows    = dimensions._1,
+        numberOfColumns = dimensions._2,
+        numberOfMines   = numberOfMines
+      ))
+    }
+    
+    def Print(): Unit =
+    {
+      require(!_minefield.isEmpty)
+      
+      
+    }
+    
+}
+
 class Minefield
 (
   numberOfRows:    Int,
@@ -49,6 +75,18 @@ class Minefield
   
   def IsAnyMineActivated = _fields.exists(row => row.exists(mineSquare => mineSquare.IsActivated))
   
+  def Print():Unit =
+  {
+    if (!IsAnyMineActivated) 
+    {
+      PrintCovered()
+    }
+    else 
+    {
+      PrintUncovered() 
+    }
+  }
+  // TODO: Make private
   def PrintCovered  (): Unit = {
     _fields.foreach(
       row => 
