@@ -2,6 +2,18 @@ package Minesweeper.Model
 
 import Minesweeper.Mappers
 
+case class Dimension
+(
+    numberOfRows:    Int,
+    numberOfColumns: Int
+)
+
+case class Location
+(
+    Row:    Int,
+    Column: Int
+)
+
 
 sealed trait MouseClick
 object MouseClick
@@ -9,6 +21,7 @@ object MouseClick
     case class Left  extends MouseClick 
     case class Right extends MouseClick
 }
+
 
 case class Move
 (
@@ -22,23 +35,23 @@ class Game
 {
     private var _minefield: Option[Minesweeper.Model.Minefield] = None
     
-    def StartNewGame(dimensions: (Int, Int), numberOfMines: Int): Unit =
+    def StartNewGame(dimensions: Dimension, numberOfMines: Int): Unit =
     {
         _minefield = Some(new Minesweeper.Model.Minefield(
-          numberOfRows    = dimensions._1,
-          numberOfColumns = dimensions._2,
+          numberOfRows    = dimensions.numberOfRows,
+          numberOfColumns = dimensions.numberOfColumns,
           numberOfMines   = numberOfMines
         ))
     }
     
-    def MakeMove(location: (Int, Int), click: Char) =
+    def MakeMove(location: Location, click: Char) =
     {
         require(!_minefield.isEmpty)
         require(click == 'L' || click == 'R')
         
         val move =  new Move(
-            Row        = location._1,
-            Column     = location._2,
+            Row        = location.Row,
+            Column     = location.Column,
             MouseClick = click match {
                 case 'L' => MouseClick.Left()
                 case 'R' => MouseClick.Right()
@@ -109,97 +122,96 @@ class Minefield
         if(! (_fields(move.Row)(move.Column).Status == MineSquare.Status.Revealed()))
         {
             move.MouseClick match {
-                case MouseClick.Left () => leftClick (move.Row, move.Column)
-                case MouseClick.Right() => rightClick(move.Row, move.Column)
+                case MouseClick.Left () => leftClick (Location(move.Row, move.Column))
+                case MouseClick.Right() => rightClick(Location(move.Row, move.Column))
             }
         }
         
         
-        def leftClick(row: Int, column: Int)
+        def leftClick(location: Location)
         {
-            _fields(move.Row)( move.Column) match
+            _fields(location.Row)( location.Column) match
             {
                 case mineSquare 
                     if mineSquare.HasMine
                         => {
-                          _fields(move.Row)(move.Column).IsActivated_=(true)
-                          _fields(move.Row)(move.Column).Status_=(MineSquare.Status.Activated())
+                          _fields(location.Row)(location.Column).IsActivated_=(true)
+                          _fields(location.Row)(location.Column).Status_=(MineSquare.Status.Activated())
                         }
                 case mineSquare
                     if !mineSquare.HasMine
                         => floodFillForRevealingSquares(
-                              startingSquareLocation = (move.Row, move.Column)
+                              startingSquareLocation = Location(location.Row, location.Column)
                            )
             }
             
             
-            def floodFillForRevealingSquares(startingSquareLocation: (Int, Int))
+            def floodFillForRevealingSquares(startingSquareLocation: Location)
             {
-                var concealedList = (new Tuple2(startingSquareLocation._1, startingSquareLocation._2)) :: Nil
+                var concealedList = startingSquareLocation :: Nil
                 
                 while(!concealedList.isEmpty)
                 {
                     val last = concealedList.last
-                    _fields(last._1)(last._2).Status_=(MineSquare.Status.Revealed())
+                    _fields(last.Row)(last.Column).Status_=(MineSquare.Status.Revealed())
                     
                     concealedList = concealedList.init
                     
-                    println(_countSurroundingMines((last._1, last._2)))
-                    if(_countSurroundingMines((last._1, last._2)) == 0)
+                    if(_countSurroundingMines(Location(last.Row, last.Column)) == 0)
                     {
                         //Up
-                        if(last._1 != 0)
+                        if(last.Row != 0)
                         {
-                            if(!_fields(last._1 - 1)(last._2).HasMine &&
-                                _fields(last._1 - 1)(last._2).Status == MineSquare.Status.Concealed())
+                            if(!_fields(last.Row - 1)(last.Column).HasMine &&
+                                _fields(last.Row - 1)(last.Column).Status == MineSquare.Status.Concealed())
                             {
-                                concealedList ::= (last._1 - 1, last._2)
+                                concealedList ::= Location(last.Row - 1, last.Column)
                             }
                         }
                         // Right
-                        if(last._2 != (numberOfColumns - 1))
+                        if(last.Column != (numberOfColumns - 1))
                         {
-                            if(!_fields(last._1)(last._2 + 1).HasMine &&
-                                _fields(last._1)(last._2 + 1).Status == MineSquare.Status.Concealed())
+                            if(!_fields(last.Row)(last.Column + 1).HasMine &&
+                                _fields(last.Row)(last.Column + 1).Status == MineSquare.Status.Concealed())
                             {
-                                concealedList ::= (last._1, last._2 + 1)
+                                concealedList ::= Location(last.Row, last.Column + 1)
                             }
                         }
                         // Down
-                        if(last._1 != (numberOfRows - 1))
+                        if(last.Row != (numberOfRows - 1))
                         {
-                            if(!_fields(last._1 + 1)(last._2).HasMine &&
-                                _fields(last._1 + 1)(last._2).Status == MineSquare.Status.Concealed())
+                            if(!_fields(last.Row + 1)(last.Column).HasMine &&
+                                _fields(last.Row + 1)(last.Column).Status == MineSquare.Status.Concealed())
                             {
-                                concealedList ::= (last._1 + 1, last._2)
+                                concealedList ::= Location(last.Row + 1, last.Column)
                             }
                         }
                         // Left
-                        if(last._2 != 0)
+                        if(last.Column != 0)
                         {
-                            if(!_fields(last._1)(last._2 - 1).HasMine &&
-                                _fields(last._1)(last._2 - 1).Status == MineSquare.Status.Concealed())
+                            if(!_fields(last.Row)(last.Column - 1).HasMine &&
+                                _fields(last.Row)(last.Column - 1).Status == MineSquare.Status.Concealed())
                             {
-                                concealedList ::= (last._1, last._2 - 1)
+                                concealedList ::= Location(last.Row, last.Column - 1)
                             }
                         }
                     }
                 }
             }
         }
-        def rightClick(row: Int, column: Int)
+        def rightClick(location: Location)
         {
-            _fields(move.Row)( move.Column).Status match
+            _fields(location.Row)( location.Column).Status match
             {
                 case status 
                     if status == MineSquare.Status.Concealed
-                        => _fields(move.Row)(move.Column).Status_=(MineSquare.Status.Flagged())
+                        => _fields(location.Row)(location.Column).Status_=(MineSquare.Status.Flagged())
                 case status 
                     if status == MineSquare.Status.Flagged
-                        => _fields(move.Row)(move.Column).Status_=(MineSquare.Status.Questioned())
+                        => _fields(location.Row)(location.Column).Status_=(MineSquare.Status.Questioned())
                 case status 
                     if status == MineSquare.Status.Questioned
-                        => _fields(move.Row)(move.Column).Status_=(MineSquare.Status.Concealed())
+                        => _fields(location.Row)(location.Column).Status_=(MineSquare.Status.Concealed())
             }
         }
     }
@@ -216,77 +228,77 @@ class Minefield
     }
     def PrintUncovered(): Unit = _printUncovered //tmp
     
-    private def _countSurroundingMines(mineSquareLocation: (Int, Int)): Int =
+    private def _countSurroundingMines(mineSquareLocation: Location): Int =
     {
         var count = 0;
         
         // Up
-        if(mineSquareLocation._1 != 0)
+        if(mineSquareLocation.Row != 0)
         {
             // Up Left
-            if(mineSquareLocation._2 != 0)
+            if(mineSquareLocation.Column != 0)
             {
-                if(_fields(mineSquareLocation._1 - 1)(mineSquareLocation._2 - 1).HasMine)
+                if(_fields(mineSquareLocation.Row - 1)(mineSquareLocation.Column - 1).HasMine)
                 {
                     count = count + 1;
                 }
             }
             
             // Up
-            if(_fields(mineSquareLocation._1 - 1)(mineSquareLocation._2).HasMine)
+            if(_fields(mineSquareLocation.Row - 1)(mineSquareLocation.Column).HasMine)
             {
                 count = count + 1;
             }
             
             // Up Right
-            if(mineSquareLocation._2 != (numberOfColumns - 1))
+            if(mineSquareLocation.Column != (numberOfColumns - 1))
             {
-                if(_fields(mineSquareLocation._1 - 1)(mineSquareLocation._2 + 1).HasMine)
+                if(_fields(mineSquareLocation.Row - 1)(mineSquareLocation.Column + 1).HasMine)
                 {
                     count = count + 1;
                 }
             }
         }
         // Right
-        if(mineSquareLocation._2 != (numberOfColumns - 1))
+        if(mineSquareLocation.Column != (numberOfColumns - 1))
         {
-            if(_fields(mineSquareLocation._1)(mineSquareLocation._2 + 1).HasMine)
+            if(_fields(mineSquareLocation.Row)(mineSquareLocation.Column + 1).HasMine)
             {
                 count = count + 1;
             }
         }
         // Down
-        if(mineSquareLocation._1 != (numberOfRows - 1))
+        if(mineSquareLocation.Row != (numberOfRows - 1))
         {
             
             // Down Right
-            if(mineSquareLocation._2 != (numberOfColumns - 1))
+            if(mineSquareLocation.Column != (numberOfColumns - 1))
             {
-                if(_fields(mineSquareLocation._1 + 1)(mineSquareLocation._2 + 1).HasMine)
+                if(_fields(mineSquareLocation.Row + 1)(mineSquareLocation.Column + 1).HasMine)
                 {
                     count = count + 1;
                 }
             }
             
             // Down
-            if(_fields(mineSquareLocation._1 + 1)(mineSquareLocation._2).HasMine)
+            if(_fields(mineSquareLocation.Row + 1)(mineSquareLocation.Column).HasMine)
             {
                 count = count + 1;
             }
             
             // Down Left
-            if(mineSquareLocation._2 != 0)
+            if(mineSquareLocation.Column != 0)
             {
-                if(_fields(mineSquareLocation._1 + 1)(mineSquareLocation._2 - 1).HasMine)
+                if(_fields(mineSquareLocation.Row + 1)(mineSquareLocation.Column - 1).HasMine)
                 {
                     count = count + 1;
                 }
             }
         }
         // Left
-        if(mineSquareLocation._2 != 0)
+        if(mineSquareLocation.Column != 0)
         {
-            if(_fields(mineSquareLocation._1)(mineSquareLocation._2 - 1).HasMine)
+            if(_fields(mineSquareLocation.Row)(mineSquareLocation.Column - 1).HasMine)
             {
                 count = count + 1;
             }
