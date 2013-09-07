@@ -74,7 +74,7 @@ class Minefield
     require(numberOfRows    > 2)
     require(numberOfColumns > 2)
     
-    private val _fields = Array.fill(numberOfRows, numberOfColumns)(MineSquare(false))
+    private val _fields = Array.fill(numberOfRows, numberOfColumns)(MineSquare.MineSquare(false))
     _fillWithMines(numberOfMines)
     
     private def _fillWithMines(numberOfMines: Int): Unit =
@@ -89,7 +89,7 @@ class Minefield
         {
             if(!_fields(flatenedLocation / numberOfRows)(flatenedLocation % numberOfRows).HasMine)
             {
-              _fields(flatenedLocation / numberOfRows)(flatenedLocation % numberOfRows) = MineSquare(true)
+              _fields(flatenedLocation / numberOfRows)(flatenedLocation % numberOfRows) = MineSquare.MineSquare(true)
             }
             else
             {
@@ -106,7 +106,7 @@ class Minefield
         require(0 <= move.Row    && move.Row    < numberOfRows    )
         require(0 <= move.Column && move.Column < numberOfColumns )
         
-        if(! (_fields(move.Row)(move.Column).Status == MineSquareStatus.Revealed()))
+        if(! (_fields(move.Row)(move.Column).Status == MineSquare.Status.Revealed()))
         {
             move.MouseClick match {
                 case MouseClick.Left () => leftClick (move.Row, move.Column)
@@ -123,7 +123,7 @@ class Minefield
                     if mineSquare.HasMine
                         => {
                           _fields(move.Row)(move.Column).IsActivated_=(true)
-                          _fields(move.Row)(move.Column).Status_=(MineSquareStatus.Activated())
+                          _fields(move.Row)(move.Column).Status_=(MineSquare.Status.Activated())
                         }
                 case mineSquare
                     if !mineSquare.HasMine
@@ -140,7 +140,7 @@ class Minefield
                 while(!concealedList.isEmpty)
                 {
                     val last = concealedList.last
-                    _fields(last._1)(last._2).Status_=(MineSquareStatus.Revealed())
+                    _fields(last._1)(last._2).Status_=(MineSquare.Status.Revealed())
                     
                     concealedList = concealedList.init
                     
@@ -151,7 +151,7 @@ class Minefield
                         if(last._1 != 0)
                         {
                             if(!_fields(last._1 - 1)(last._2).HasMine &&
-                                _fields(last._1 - 1)(last._2).Status == MineSquareStatus.Concealed())
+                                _fields(last._1 - 1)(last._2).Status == MineSquare.Status.Concealed())
                             {
                                 concealedList ::= (last._1 - 1, last._2)
                             }
@@ -160,7 +160,7 @@ class Minefield
                         if(last._2 != (numberOfColumns - 1))
                         {
                             if(!_fields(last._1)(last._2 + 1).HasMine &&
-                                _fields(last._1)(last._2 + 1).Status == MineSquareStatus.Concealed())
+                                _fields(last._1)(last._2 + 1).Status == MineSquare.Status.Concealed())
                             {
                                 concealedList ::= (last._1, last._2 + 1)
                             }
@@ -169,7 +169,7 @@ class Minefield
                         if(last._1 != (numberOfRows - 1))
                         {
                             if(!_fields(last._1 + 1)(last._2).HasMine &&
-                                _fields(last._1 + 1)(last._2).Status == MineSquareStatus.Concealed())
+                                _fields(last._1 + 1)(last._2).Status == MineSquare.Status.Concealed())
                             {
                                 concealedList ::= (last._1 + 1, last._2)
                             }
@@ -178,7 +178,7 @@ class Minefield
                         if(last._2 != 0)
                         {
                             if(!_fields(last._1)(last._2 - 1).HasMine &&
-                                _fields(last._1)(last._2 - 1).Status == MineSquareStatus.Concealed())
+                                _fields(last._1)(last._2 - 1).Status == MineSquare.Status.Concealed())
                             {
                                 concealedList ::= (last._1, last._2 - 1)
                             }
@@ -192,14 +192,14 @@ class Minefield
             _fields(move.Row)( move.Column).Status match
             {
                 case status 
-                    if status == MineSquareStatus.Concealed
-                        => _fields(move.Row)(move.Column).Status_=(MineSquareStatus.Flagged())
+                    if status == MineSquare.Status.Concealed
+                        => _fields(move.Row)(move.Column).Status_=(MineSquare.Status.Flagged())
                 case status 
-                    if status == MineSquareStatus.Flagged
-                        => _fields(move.Row)(move.Column).Status_=(MineSquareStatus.Questioned())
+                    if status == MineSquare.Status.Flagged
+                        => _fields(move.Row)(move.Column).Status_=(MineSquare.Status.Questioned())
                 case status 
-                    if status == MineSquareStatus.Questioned
-                        => _fields(move.Row)(move.Column).Status_=(MineSquareStatus.Concealed())
+                    if status == MineSquare.Status.Questioned
+                        => _fields(move.Row)(move.Column).Status_=(MineSquare.Status.Concealed())
             }
         }
     }
@@ -301,16 +301,16 @@ class Minefield
                     row.flatMap(
                         _ match {
                             case mineSquare
-                                if mineSquare.Status == MineSquareStatus.Flagged()
+                                if mineSquare.Status == MineSquare.Status.Flagged()
                                     => Minesweeper.Mappers.AsciiMap("Flagged")
                             case mineSquare
-                                if mineSquare.Status == MineSquareStatus.Concealed()
+                                if mineSquare.Status == MineSquare.Status.Concealed()
                                     => Minesweeper.Mappers.AsciiMap("Concealed")
                             case mineSquare
-                                if mineSquare.Status == MineSquareStatus.Revealed()
+                                if mineSquare.Status == MineSquare.Status.Revealed()
                                     => { println( "(" + _fields.indexOf(row).toString + ", " + row.indexOf(mineSquare).toString + ")" ); "." /*_countSurroundingMines( _fields.indexOf(row), row.indexOf(mineSquare) ).toString*/ }
                             case mineSquare
-                                if mineSquare.Status == MineSquareStatus.Questioned()
+                                if mineSquare.Status == MineSquare.Status.Questioned()
                                     => Minesweeper.Mappers.AsciiMap("Questioned")
                         })
                         .mkString(" ")
@@ -330,22 +330,22 @@ class Minefield
                                 if mineSquare.HasMine
                                     => Minesweeper.Mappers.AsciiMap("Mine")
                             case mineSquare
-                                if mineSquare.Status == MineSquareStatus.Concealed()
+                                if mineSquare.Status == MineSquare.Status.Concealed()
                                     => Minesweeper.Mappers.AsciiMap("Concealed")
                             case mineSquare
-                                if mineSquare.Status == MineSquareStatus.Revealed()
+                                if mineSquare.Status == MineSquare.Status.Revealed()
                                     => Minesweeper.Mappers.AsciiMap("Revealed")
                             case mineSquare 
-                                if mineSquare.HasMine && (mineSquare.Status == MineSquareStatus.Flagged())
+                                if mineSquare.HasMine && (mineSquare.Status == MineSquare.Status.Flagged())
                                     => Minesweeper.Mappers.AsciiMap("FlaggedAndHasMine")
                             case mineSquare
-                                if mineSquare.Status == MineSquareStatus.Flagged()
+                                if mineSquare.Status == MineSquare.Status.Flagged()
                                     => Minesweeper.Mappers.AsciiMap("Flagged")
                             case mineSquare
-                                if mineSquare.HasMine && (mineSquare.Status == MineSquareStatus.Questioned())
+                                if mineSquare.HasMine && (mineSquare.Status == MineSquare.Status.Questioned())
                                     => Minesweeper.Mappers.AsciiMap("QuestionedAndIsMine")
                             case mineSquare
-                                if mineSquare.Status == MineSquareStatus.Questioned()
+                                if mineSquare.Status == MineSquare.Status.Questioned()
                                     => Minesweeper.Mappers.AsciiMap("Questioned")
                         })
                         .mkString(" ")
@@ -354,26 +354,30 @@ class Minefield
     }
 }
 
-sealed trait MineSquareStatus
-object MineSquareStatus
-{    
-    case class Concealed  extends MineSquareStatus
-    case class Revealed   extends MineSquareStatus
-    case class Flagged    extends MineSquareStatus
-    case class Questioned extends MineSquareStatus
-    case class Activated  extends MineSquareStatus
-}
 
-case class MineSquare
-(
-    HasMine: Boolean
-)
+object MineSquare
 {
-    private[this] var _status: MineSquareStatus = MineSquareStatus.Concealed()
-    def Status = _status
-    def Status_= (status: MineSquareStatus) { _status = status }
+    sealed trait Status
+    object Status
+    {    
+        case class Concealed  extends Status
+        case class Revealed   extends Status
+        case class Flagged    extends Status
+        case class Questioned extends Status
+        case class Activated  extends Status
+    }
     
-    private[this] var _isActivated = false
-    def IsActivated = _isActivated
-    def IsActivated_= (isActivated: Boolean) { _isActivated = isActivated }
+    case class MineSquare
+    (
+        HasMine: Boolean
+    )
+    {
+        private[this] var _status: Status = Minesweeper.Model.MineSquare.Status.Concealed()
+        def Status = _status
+        def Status_= (status: Status) { _status = status }
+        
+        private[this] var _isActivated = false
+        def IsActivated = _isActivated
+        def IsActivated_= (isActivated: Boolean) { _isActivated = isActivated }
+    }
 }
