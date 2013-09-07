@@ -45,7 +45,7 @@ class Game
     }
     
     //tmp
-    def PrintUncovered():Unit = _minefield.get.PrintUncovered
+    def PrintUncovered(): Unit = _minefield.get.PrintUncovered
     
     def EndGame()
     {
@@ -112,8 +112,8 @@ object Minefield
         def MakeMove(move: Move): Unit =
         {
             require(!IsAnyMineActivated)
-            require(0 <= move.Location.Row    && move.Location.Row    < dimension.numberOfRows    )
-            require(0 <= move.Location.Column && move.Location.Column < dimension.numberOfColumns )
+            require(move.Location.Row    < dimension.numberOfRows    )
+            require(move.Location.Column < dimension.numberOfColumns )
             
             if(! (_fields(move.Location.Row)(move.Location.Column).Status == MineSquare.Status.Revealed()))
             {
@@ -126,7 +126,7 @@ object Minefield
             
             def leftClick(location: Location)
             {
-                _fields(location.Row)( location.Column) match
+                _fields(location.Row)(location.Column) match
                 {
                     case mineSquare 
                         if mineSquare.HasMine
@@ -137,7 +137,7 @@ object Minefield
                     case mineSquare
                         if !mineSquare.HasMine
                             => floodFillForRevealingSquares(
-                                  startingSquareLocation = Location(location.Row, location.Column)
+                                  startingSquareLocation = location
                                )
                 }
                 
