@@ -25,8 +25,7 @@ object MouseClick
 
 case class Move
 (
-    Row:        Int,
-    Column:     Int,
+    Location:   Location,
     MouseClick: MouseClick
 )
 
@@ -44,19 +43,10 @@ class Game
         ))
     }
     
-    def MakeMove(location: Location, click: Char) =
+    def MakeMove(move: Move) =
     {
         require(!_minefield.isEmpty)
-        require(click == 'L' || click == 'R')
-        
-        val move =  new Move(
-            Row        = location.Row,
-            Column     = location.Column,
-            MouseClick = click match {
-                case 'L' => MouseClick.Left()
-                case 'R' => MouseClick.Right()
-              }
-        )
+
         _minefield.get.MakeMove(move)
     }
     
@@ -116,14 +106,14 @@ class Minefield
     def MakeMove(move: Move): Unit =
     {
         require(!IsAnyMineActivated)
-        require(0 <= move.Row    && move.Row    < numberOfRows    )
-        require(0 <= move.Column && move.Column < numberOfColumns )
+        require(0 <= move.Location.Row    && move.Location.Row    < numberOfRows    )
+        require(0 <= move.Location.Column && move.Location.Column < numberOfColumns )
         
-        if(! (_fields(move.Row)(move.Column).Status == MineSquare.Status.Revealed()))
+        if(! (_fields(move.Location.Row)(move.Location.Column).Status == MineSquare.Status.Revealed()))
         {
             move.MouseClick match {
-                case MouseClick.Left () => leftClick (Location(move.Row, move.Column))
-                case MouseClick.Right() => rightClick(Location(move.Row, move.Column))
+                case MouseClick.Left () => leftClick (move.Location)
+                case MouseClick.Right() => rightClick(move.Location)
             }
         }
         

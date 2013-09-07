@@ -9,7 +9,12 @@ object Main extends App {
     )
     //game.MakeMove((1, 2), 'R')
     //game.MakeMove((1, 5), 'R')
-    game.MakeMove(Location(4, 5), 'L')
+    game.MakeMove(
+        Move(
+             Location   = Location(4, 5),
+             MouseClick = MouseClick.Left()
+        )
+    )
     game.Print()
     println("======================")
     game.PrintUncovered()
