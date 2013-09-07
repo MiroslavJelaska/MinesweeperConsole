@@ -25,9 +25,8 @@ class Game
     def StartNewGame(dimensions: Minefield.Dimension, numberOfMines: Int): Unit =
     {
         _minefield = Some(new Minesweeper.Model.Minefield.Minefield(
-          numberOfRows    = dimensions.numberOfRows,
-          numberOfColumns = dimensions.numberOfColumns,
-          numberOfMines   = numberOfMines
+          dimension     = dimensions,
+          numberOfMines = numberOfMines
         ))
     }
     
@@ -61,24 +60,30 @@ object Minefield
         numberOfRows:    Int,
         numberOfColumns: Int
     )
+    {
+        require(numberOfRows    > 2)
+        require(numberOfColumns > 2)
+    }
     
     case class Location
     (
         Row:    Int,
         Column: Int
     )
+    {
+        require(Row    >= 0)
+        require(Column >= 0)
+    }
     
     class Minefield
     (
-        numberOfRows:    Int,
-        numberOfColumns: Int,
-        numberOfMines:   Int
+        dimension:     Dimension,
+        numberOfMines: Int
     )
     {
-        require(numberOfRows    > 2)
-        require(numberOfColumns > 2)
+        require(numberOfMines < dimension.numberOfRows * dimension.numberOfColumns)
         
-        private val _fields = Array.fill(numberOfRows, numberOfColumns)(MineSquare.MineSquare(false))
+        private val _fields = Array.fill(dimension.numberOfRows, dimension.numberOfColumns)(MineSquare.MineSquare(false))
         _fillWithMines(numberOfMines)
         
         private def _fillWithMines(numberOfMines: Int): Unit =
@@ -87,13 +92,13 @@ object Minefield
                .foreach(x => randomFill(getRandomFlattenedLocation))
                
                
-            def getRandomFlattenedLocation = scala.util.Random.nextInt(numberOfRows * numberOfColumns)
+            def getRandomFlattenedLocation = scala.util.Random.nextInt(dimension.numberOfRows * dimension.numberOfColumns)
             
             def randomFill(flatenedLocation: Int): Unit =
             {
-                if(!_fields(flatenedLocation / numberOfRows)(flatenedLocation % numberOfRows).HasMine)
+                if(!_fields(flatenedLocation / dimension.numberOfRows)(flatenedLocation % dimension.numberOfRows).HasMine)
                 {
-                  _fields(flatenedLocation / numberOfRows)(flatenedLocation % numberOfRows) = MineSquare.MineSquare(true)
+                  _fields(flatenedLocation / dimension.numberOfRows)(flatenedLocation % dimension.numberOfRows) = MineSquare.MineSquare(true)
                 }
                 else
                 {
@@ -107,8 +112,8 @@ object Minefield
         def MakeMove(move: Move): Unit =
         {
             require(!IsAnyMineActivated)
-            require(0 <= move.Location.Row    && move.Location.Row    < numberOfRows    )
-            require(0 <= move.Location.Column && move.Location.Column < numberOfColumns )
+            require(0 <= move.Location.Row    && move.Location.Row    < dimension.numberOfRows    )
+            require(0 <= move.Location.Column && move.Location.Column < dimension.numberOfColumns )
             
             if(! (_fields(move.Location.Row)(move.Location.Column).Status == MineSquare.Status.Revealed()))
             {
@@ -160,7 +165,7 @@ object Minefield
                                 }
                             }
                             // Right
-                            if(last.Column != (numberOfColumns - 1))
+                            if(last.Column != (dimension.numberOfColumns - 1))
                             {
                                 if(!_fields(last.Row)(last.Column + 1).HasMine &&
                                     _fields(last.Row)(last.Column + 1).Status == MineSquare.Status.Concealed())
@@ -169,7 +174,7 @@ object Minefield
                                 }
                             }
                             // Down
-                            if(last.Row != (numberOfRows - 1))
+                            if(last.Row != (dimension.numberOfRows - 1))
                             {
                                 if(!_fields(last.Row + 1)(last.Column).HasMine &&
                                     _fields(last.Row + 1)(last.Column).Status == MineSquare.Status.Concealed())
@@ -242,7 +247,7 @@ object Minefield
                 }
                 
                 // Up Right
-                if(mineSquareLocation.Column != (numberOfColumns - 1))
+                if(mineSquareLocation.Column != (dimension.numberOfColumns - 1))
                 {
                     if(_fields(mineSquareLocation.Row - 1)(mineSquareLocation.Column + 1).HasMine)
                     {
@@ -251,7 +256,7 @@ object Minefield
                 }
             }
             // Right
-            if(mineSquareLocation.Column != (numberOfColumns - 1))
+            if(mineSquareLocation.Column != (dimension.numberOfColumns - 1))
             {
                 if(_fields(mineSquareLocation.Row)(mineSquareLocation.Column + 1).HasMine)
                 {
@@ -259,11 +264,11 @@ object Minefield
                 }
             }
             // Down
-            if(mineSquareLocation.Row != (numberOfRows - 1))
+            if(mineSquareLocation.Row != (dimension.numberOfRows - 1))
             {
                 
                 // Down Right
-                if(mineSquareLocation.Column != (numberOfColumns - 1))
+                if(mineSquareLocation.Column != (dimension.numberOfColumns - 1))
                 {
                     if(_fields(mineSquareLocation.Row + 1)(mineSquareLocation.Column + 1).HasMine)
                     {
