@@ -2,18 +2,6 @@ package Minesweeper.Model
 
 import Minesweeper.Mappers
 
-case class Dimension
-(
-    numberOfRows:    Int,
-    numberOfColumns: Int
-)
-
-case class Location
-(
-    Row:    Int,
-    Column: Int
-)
-
 
 sealed trait MouseClick
 object MouseClick
@@ -25,18 +13,18 @@ object MouseClick
 
 case class Move
 (
-    Location:   Location,
+    Location:   Minefield.Location,
     MouseClick: MouseClick
 )
 
 
 class Game
 {
-    private var _minefield: Option[Minesweeper.Model.Minefield] = None
+    private var _minefield: Option[Minesweeper.Model.Minefield.Minefield] = None
     
-    def StartNewGame(dimensions: Dimension, numberOfMines: Int): Unit =
+    def StartNewGame(dimensions: Minefield.Dimension, numberOfMines: Int): Unit =
     {
-        _minefield = Some(new Minesweeper.Model.Minefield(
+        _minefield = Some(new Minesweeper.Model.Minefield.Minefield(
           numberOfRows    = dimensions.numberOfRows,
           numberOfColumns = dimensions.numberOfColumns,
           numberOfMines   = numberOfMines
@@ -66,296 +54,309 @@ class Game
     }
 }
 
-
-class Minefield
-(
-    numberOfRows:    Int,
-    numberOfColumns: Int,
-    numberOfMines:   Int
-)
+object Minefield
 {
-    require(numberOfRows    > 2)
-    require(numberOfColumns > 2)
+    case class Dimension
+    (
+        numberOfRows:    Int,
+        numberOfColumns: Int
+    )
     
-    private val _fields = Array.fill(numberOfRows, numberOfColumns)(MineSquare.MineSquare(false))
-    _fillWithMines(numberOfMines)
+    case class Location
+    (
+        Row:    Int,
+        Column: Int
+    )
     
-    private def _fillWithMines(numberOfMines: Int): Unit =
+    class Minefield
+    (
+        numberOfRows:    Int,
+        numberOfColumns: Int,
+        numberOfMines:   Int
+    )
     {
-        Seq.fill   (numberOfMines)(0)
-           .foreach(x => randomFill(getRandomFlattenedLocation))
-           
-           
-        def getRandomFlattenedLocation = scala.util.Random.nextInt(numberOfRows * numberOfColumns)
+        require(numberOfRows    > 2)
+        require(numberOfColumns > 2)
         
-        def randomFill(flatenedLocation: Int): Unit =
+        private val _fields = Array.fill(numberOfRows, numberOfColumns)(MineSquare.MineSquare(false))
+        _fillWithMines(numberOfMines)
+        
+        private def _fillWithMines(numberOfMines: Int): Unit =
         {
-            if(!_fields(flatenedLocation / numberOfRows)(flatenedLocation % numberOfRows).HasMine)
-            {
-              _fields(flatenedLocation / numberOfRows)(flatenedLocation % numberOfRows) = MineSquare.MineSquare(true)
-            }
-            else
-            {
-                randomFill(getRandomFlattenedLocation)
-            }
-        }
-    }
-    
-    
-    def IsAnyMineActivated = _fields.exists(row => row.exists(mineSquare => mineSquare.IsActivated))
-    def MakeMove(move: Move): Unit =
-    {
-        require(!IsAnyMineActivated)
-        require(0 <= move.Location.Row    && move.Location.Row    < numberOfRows    )
-        require(0 <= move.Location.Column && move.Location.Column < numberOfColumns )
-        
-        if(! (_fields(move.Location.Row)(move.Location.Column).Status == MineSquare.Status.Revealed()))
-        {
-            move.MouseClick match {
-                case MouseClick.Left () => leftClick (move.Location)
-                case MouseClick.Right() => rightClick(move.Location)
-            }
-        }
-        
-        
-        def leftClick(location: Location)
-        {
-            _fields(location.Row)( location.Column) match
-            {
-                case mineSquare 
-                    if mineSquare.HasMine
-                        => {
-                          _fields(location.Row)(location.Column).IsActivated_=(true)
-                          _fields(location.Row)(location.Column).Status_=(MineSquare.Status.Activated())
-                        }
-                case mineSquare
-                    if !mineSquare.HasMine
-                        => floodFillForRevealingSquares(
-                              startingSquareLocation = Location(location.Row, location.Column)
-                           )
-            }
+            Seq.fill   (numberOfMines)(0)
+               .foreach(x => randomFill(getRandomFlattenedLocation))
+               
+               
+            def getRandomFlattenedLocation = scala.util.Random.nextInt(numberOfRows * numberOfColumns)
             
-            
-            def floodFillForRevealingSquares(startingSquareLocation: Location)
+            def randomFill(flatenedLocation: Int): Unit =
             {
-                var concealedList = startingSquareLocation :: Nil
-                
-                while(!concealedList.isEmpty)
+                if(!_fields(flatenedLocation / numberOfRows)(flatenedLocation % numberOfRows).HasMine)
                 {
-                    val last = concealedList.last
-                    _fields(last.Row)(last.Column).Status_=(MineSquare.Status.Revealed())
+                  _fields(flatenedLocation / numberOfRows)(flatenedLocation % numberOfRows) = MineSquare.MineSquare(true)
+                }
+                else
+                {
+                    randomFill(getRandomFlattenedLocation)
+                }
+            }
+        }
+        
+        
+        def IsAnyMineActivated = _fields.exists(row => row.exists(mineSquare => mineSquare.IsActivated))
+        def MakeMove(move: Move): Unit =
+        {
+            require(!IsAnyMineActivated)
+            require(0 <= move.Location.Row    && move.Location.Row    < numberOfRows    )
+            require(0 <= move.Location.Column && move.Location.Column < numberOfColumns )
+            
+            if(! (_fields(move.Location.Row)(move.Location.Column).Status == MineSquare.Status.Revealed()))
+            {
+                move.MouseClick match {
+                    case MouseClick.Left () => leftClick (move.Location)
+                    case MouseClick.Right() => rightClick(move.Location)
+                }
+            }
+            
+            
+            def leftClick(location: Location)
+            {
+                _fields(location.Row)( location.Column) match
+                {
+                    case mineSquare 
+                        if mineSquare.HasMine
+                            => {
+                              _fields(location.Row)(location.Column).IsActivated_=(true)
+                              _fields(location.Row)(location.Column).Status_=(MineSquare.Status.Activated())
+                            }
+                    case mineSquare
+                        if !mineSquare.HasMine
+                            => floodFillForRevealingSquares(
+                                  startingSquareLocation = Location(location.Row, location.Column)
+                               )
+                }
+                
+                
+                def floodFillForRevealingSquares(startingSquareLocation: Location)
+                {
+                    var concealedList = startingSquareLocation :: Nil
                     
-                    concealedList = concealedList.init
-                    
-                    if(_countSurroundingMines(Location(last.Row, last.Column)) == 0)
+                    while(!concealedList.isEmpty)
                     {
-                        //Up
-                        if(last.Row != 0)
+                        val last = concealedList.last
+                        _fields(last.Row)(last.Column).Status_=(MineSquare.Status.Revealed())
+                        
+                        concealedList = concealedList.init
+                        
+                        if(_countSurroundingMines(Location(last.Row, last.Column)) == 0)
                         {
-                            if(!_fields(last.Row - 1)(last.Column).HasMine &&
-                                _fields(last.Row - 1)(last.Column).Status == MineSquare.Status.Concealed())
+                            //Up
+                            if(last.Row != 0)
                             {
-                                concealedList ::= Location(last.Row - 1, last.Column)
+                                if(!_fields(last.Row - 1)(last.Column).HasMine &&
+                                    _fields(last.Row - 1)(last.Column).Status == MineSquare.Status.Concealed())
+                                {
+                                    concealedList ::= Location(last.Row - 1, last.Column)
+                                }
                             }
-                        }
-                        // Right
-                        if(last.Column != (numberOfColumns - 1))
-                        {
-                            if(!_fields(last.Row)(last.Column + 1).HasMine &&
-                                _fields(last.Row)(last.Column + 1).Status == MineSquare.Status.Concealed())
+                            // Right
+                            if(last.Column != (numberOfColumns - 1))
                             {
-                                concealedList ::= Location(last.Row, last.Column + 1)
+                                if(!_fields(last.Row)(last.Column + 1).HasMine &&
+                                    _fields(last.Row)(last.Column + 1).Status == MineSquare.Status.Concealed())
+                                {
+                                    concealedList ::= Location(last.Row, last.Column + 1)
+                                }
                             }
-                        }
-                        // Down
-                        if(last.Row != (numberOfRows - 1))
-                        {
-                            if(!_fields(last.Row + 1)(last.Column).HasMine &&
-                                _fields(last.Row + 1)(last.Column).Status == MineSquare.Status.Concealed())
+                            // Down
+                            if(last.Row != (numberOfRows - 1))
                             {
-                                concealedList ::= Location(last.Row + 1, last.Column)
+                                if(!_fields(last.Row + 1)(last.Column).HasMine &&
+                                    _fields(last.Row + 1)(last.Column).Status == MineSquare.Status.Concealed())
+                                {
+                                    concealedList ::= Location(last.Row + 1, last.Column)
+                                }
                             }
-                        }
-                        // Left
-                        if(last.Column != 0)
-                        {
-                            if(!_fields(last.Row)(last.Column - 1).HasMine &&
-                                _fields(last.Row)(last.Column - 1).Status == MineSquare.Status.Concealed())
+                            // Left
+                            if(last.Column != 0)
                             {
-                                concealedList ::= Location(last.Row, last.Column - 1)
+                                if(!_fields(last.Row)(last.Column - 1).HasMine &&
+                                    _fields(last.Row)(last.Column - 1).Status == MineSquare.Status.Concealed())
+                                {
+                                    concealedList ::= Location(last.Row, last.Column - 1)
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-        def rightClick(location: Location)
-        {
-            _fields(location.Row)( location.Column).Status match
+            def rightClick(location: Location)
             {
-                case status 
-                    if status == MineSquare.Status.Concealed
-                        => _fields(location.Row)(location.Column).Status_=(MineSquare.Status.Flagged())
-                case status 
-                    if status == MineSquare.Status.Flagged
-                        => _fields(location.Row)(location.Column).Status_=(MineSquare.Status.Questioned())
-                case status 
-                    if status == MineSquare.Status.Questioned
-                        => _fields(location.Row)(location.Column).Status_=(MineSquare.Status.Concealed())
-            }
-        }
-    }
-    def Print():Unit =
-    {
-        if (!IsAnyMineActivated) 
-        {
-            _printCovered()
-        }
-        else 
-        {
-            _printUncovered() 
-        }
-    }
-    def PrintUncovered(): Unit = _printUncovered //tmp
-    
-    private def _countSurroundingMines(mineSquareLocation: Location): Int =
-    {
-        var count = 0;
-        
-        // Up
-        if(mineSquareLocation.Row != 0)
-        {
-            // Up Left
-            if(mineSquareLocation.Column != 0)
-            {
-                if(_fields(mineSquareLocation.Row - 1)(mineSquareLocation.Column - 1).HasMine)
+                _fields(location.Row)( location.Column).Status match
                 {
-                    count = count + 1;
+                    case status 
+                        if status == MineSquare.Status.Concealed
+                            => _fields(location.Row)(location.Column).Status_=(MineSquare.Status.Flagged())
+                    case status 
+                        if status == MineSquare.Status.Flagged
+                            => _fields(location.Row)(location.Column).Status_=(MineSquare.Status.Questioned())
+                    case status 
+                        if status == MineSquare.Status.Questioned
+                            => _fields(location.Row)(location.Column).Status_=(MineSquare.Status.Concealed())
                 }
             }
+        }
+        def Print():Unit =
+        {
+            if (!IsAnyMineActivated) 
+            {
+                _printCovered()
+            }
+            else 
+            {
+                _printUncovered() 
+            }
+        }
+        def PrintUncovered(): Unit = _printUncovered //tmp
+        
+        private def _countSurroundingMines(mineSquareLocation: Location): Int =
+        {
+            var count = 0;
             
             // Up
-            if(_fields(mineSquareLocation.Row - 1)(mineSquareLocation.Column).HasMine)
+            if(mineSquareLocation.Row != 0)
             {
-                count = count + 1;
+                // Up Left
+                if(mineSquareLocation.Column != 0)
+                {
+                    if(_fields(mineSquareLocation.Row - 1)(mineSquareLocation.Column - 1).HasMine)
+                    {
+                        count = count + 1;
+                    }
+                }
+                
+                // Up
+                if(_fields(mineSquareLocation.Row - 1)(mineSquareLocation.Column).HasMine)
+                {
+                    count = count + 1;
+                }
+                
+                // Up Right
+                if(mineSquareLocation.Column != (numberOfColumns - 1))
+                {
+                    if(_fields(mineSquareLocation.Row - 1)(mineSquareLocation.Column + 1).HasMine)
+                    {
+                        count = count + 1;
+                    }
+                }
             }
-            
-            // Up Right
+            // Right
             if(mineSquareLocation.Column != (numberOfColumns - 1))
             {
-                if(_fields(mineSquareLocation.Row - 1)(mineSquareLocation.Column + 1).HasMine)
+                if(_fields(mineSquareLocation.Row)(mineSquareLocation.Column + 1).HasMine)
                 {
                     count = count + 1;
                 }
             }
-        }
-        // Right
-        if(mineSquareLocation.Column != (numberOfColumns - 1))
-        {
-            if(_fields(mineSquareLocation.Row)(mineSquareLocation.Column + 1).HasMine)
-            {
-                count = count + 1;
-            }
-        }
-        // Down
-        if(mineSquareLocation.Row != (numberOfRows - 1))
-        {
-            
-            // Down Right
-            if(mineSquareLocation.Column != (numberOfColumns - 1))
-            {
-                if(_fields(mineSquareLocation.Row + 1)(mineSquareLocation.Column + 1).HasMine)
-                {
-                    count = count + 1;
-                }
-            }
-            
             // Down
-            if(_fields(mineSquareLocation.Row + 1)(mineSquareLocation.Column).HasMine)
+            if(mineSquareLocation.Row != (numberOfRows - 1))
             {
-                count = count + 1;
+                
+                // Down Right
+                if(mineSquareLocation.Column != (numberOfColumns - 1))
+                {
+                    if(_fields(mineSquareLocation.Row + 1)(mineSquareLocation.Column + 1).HasMine)
+                    {
+                        count = count + 1;
+                    }
+                }
+                
+                // Down
+                if(_fields(mineSquareLocation.Row + 1)(mineSquareLocation.Column).HasMine)
+                {
+                    count = count + 1;
+                }
+                
+                // Down Left
+                if(mineSquareLocation.Column != 0)
+                {
+                    if(_fields(mineSquareLocation.Row + 1)(mineSquareLocation.Column - 1).HasMine)
+                    {
+                        count = count + 1;
+                    }
+                }
             }
-            
-            // Down Left
+            // Left
             if(mineSquareLocation.Column != 0)
             {
-                if(_fields(mineSquareLocation.Row + 1)(mineSquareLocation.Column - 1).HasMine)
+                if(_fields(mineSquareLocation.Row)(mineSquareLocation.Column - 1).HasMine)
                 {
                     count = count + 1;
                 }
             }
+            
+            count
         }
-        // Left
-        if(mineSquareLocation.Column != 0)
-        {
-            if(_fields(mineSquareLocation.Row)(mineSquareLocation.Column - 1).HasMine)
-            {
-                count = count + 1;
-            }
+        private def _printCovered  (): Unit = {
+            _fields.foreach(
+                row => 
+                    (println(
+                        row.flatMap(
+                            _ match {
+                                case mineSquare
+                                    if mineSquare.Status == MineSquare.Status.Flagged()
+                                        => Minesweeper.Mappers.AsciiMap("Flagged")
+                                case mineSquare
+                                    if mineSquare.Status == MineSquare.Status.Concealed()
+                                        => Minesweeper.Mappers.AsciiMap("Concealed")
+                                case mineSquare
+                                    if mineSquare.Status == MineSquare.Status.Revealed()
+                                        => { println( "(" + _fields.indexOf(row).toString + ", " + row.indexOf(mineSquare).toString + ")" ); "." /*_countSurroundingMines( _fields.indexOf(row), row.indexOf(mineSquare) ).toString*/ }
+                                case mineSquare
+                                    if mineSquare.Status == MineSquare.Status.Questioned()
+                                        => Minesweeper.Mappers.AsciiMap("Questioned")
+                            })
+                            .mkString(" ")
+                ))
+            )
         }
-        
-        count
-    }
-    private def _printCovered  (): Unit = {
-        _fields.foreach(
-            row => 
-                (println(
-                    row.flatMap(
-                        _ match {
-                            case mineSquare
-                                if mineSquare.Status == MineSquare.Status.Flagged()
-                                    => Minesweeper.Mappers.AsciiMap("Flagged")
-                            case mineSquare
-                                if mineSquare.Status == MineSquare.Status.Concealed()
-                                    => Minesweeper.Mappers.AsciiMap("Concealed")
-                            case mineSquare
-                                if mineSquare.Status == MineSquare.Status.Revealed()
-                                    => { println( "(" + _fields.indexOf(row).toString + ", " + row.indexOf(mineSquare).toString + ")" ); "." /*_countSurroundingMines( _fields.indexOf(row), row.indexOf(mineSquare) ).toString*/ }
-                            case mineSquare
-                                if mineSquare.Status == MineSquare.Status.Questioned()
-                                    => Minesweeper.Mappers.AsciiMap("Questioned")
-                        })
-                        .mkString(" ")
-            ))
-        )
-    }
-    private def _printUncovered(): Unit = {
-        _fields.foreach(
-            row => 
-                (println(
-                    row.flatMap(
-                        _ match {
-                            case mineSquare 
-                                if mineSquare.IsActivated
-                                    => Minesweeper.Mappers.AsciiMap("Activated")
-                            case mineSquare 
-                                if mineSquare.HasMine
-                                    => Minesweeper.Mappers.AsciiMap("Mine")
-                            case mineSquare
-                                if mineSquare.Status == MineSquare.Status.Concealed()
-                                    => Minesweeper.Mappers.AsciiMap("Concealed")
-                            case mineSquare
-                                if mineSquare.Status == MineSquare.Status.Revealed()
-                                    => Minesweeper.Mappers.AsciiMap("Revealed")
-                            case mineSquare 
-                                if mineSquare.HasMine && (mineSquare.Status == MineSquare.Status.Flagged())
-                                    => Minesweeper.Mappers.AsciiMap("FlaggedAndHasMine")
-                            case mineSquare
-                                if mineSquare.Status == MineSquare.Status.Flagged()
-                                    => Minesweeper.Mappers.AsciiMap("Flagged")
-                            case mineSquare
-                                if mineSquare.HasMine && (mineSquare.Status == MineSquare.Status.Questioned())
-                                    => Minesweeper.Mappers.AsciiMap("QuestionedAndIsMine")
-                            case mineSquare
-                                if mineSquare.Status == MineSquare.Status.Questioned()
-                                    => Minesweeper.Mappers.AsciiMap("Questioned")
-                        })
-                        .mkString(" ")
-            ))
-        )
+        private def _printUncovered(): Unit = {
+            _fields.foreach(
+                row => 
+                    (println(
+                        row.flatMap(
+                            _ match {
+                                case mineSquare 
+                                    if mineSquare.IsActivated
+                                        => Minesweeper.Mappers.AsciiMap("Activated")
+                                case mineSquare 
+                                    if mineSquare.HasMine
+                                        => Minesweeper.Mappers.AsciiMap("Mine")
+                                case mineSquare
+                                    if mineSquare.Status == MineSquare.Status.Concealed()
+                                        => Minesweeper.Mappers.AsciiMap("Concealed")
+                                case mineSquare
+                                    if mineSquare.Status == MineSquare.Status.Revealed()
+                                        => Minesweeper.Mappers.AsciiMap("Revealed")
+                                case mineSquare 
+                                    if mineSquare.HasMine && (mineSquare.Status == MineSquare.Status.Flagged())
+                                        => Minesweeper.Mappers.AsciiMap("FlaggedAndHasMine")
+                                case mineSquare
+                                    if mineSquare.Status == MineSquare.Status.Flagged()
+                                        => Minesweeper.Mappers.AsciiMap("Flagged")
+                                case mineSquare
+                                    if mineSquare.HasMine && (mineSquare.Status == MineSquare.Status.Questioned())
+                                        => Minesweeper.Mappers.AsciiMap("QuestionedAndIsMine")
+                                case mineSquare
+                                    if mineSquare.Status == MineSquare.Status.Questioned()
+                                        => Minesweeper.Mappers.AsciiMap("Questioned")
+                            })
+                            .mkString(" ")
+                ))
+            )
+        }
     }
 }
-
 
 object MineSquare
 {
