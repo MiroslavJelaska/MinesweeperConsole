@@ -30,7 +30,7 @@ class Game
         ))
     }
     
-    def MakeMove(move: Move) =
+    def MakeMove(move: Move): Unit =
     {
         require(!_minefield.isEmpty)
 
@@ -124,7 +124,7 @@ object Minefield
             }
             
             
-            def leftClick(location: Location)
+            def leftClick(location: Location): Unit = 
             {
                 _fields(location.Row)(location.Column) match
                 {
@@ -195,7 +195,7 @@ object Minefield
                     }
                 }
             }
-            def rightClick(location: Location)
+            def rightClick(location: Location): Unit =
             {
                 _fields(location.Row)( location.Column).Status match
                 {
