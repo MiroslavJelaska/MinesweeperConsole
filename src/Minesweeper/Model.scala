@@ -226,82 +226,37 @@ object Minefield
         
         private def _countSurroundingMines(mineSquareLocation: Location): Int =
         {
-            var count = 0;
+            case class LocationMove(Row: Int, Column: Int)
             
-            // Up
-            if(mineSquareLocation.Row != 0)
+            def isOutOfRange(location: LocationMove): Boolean =
             {
-                // Up Left
-                if(mineSquareLocation.Column != 0)
-                {
-                    if(_fields(mineSquareLocation.Row - 1)(mineSquareLocation.Column - 1).HasMine)
-                    {
-                        count = count + 1;
-                    }
-                }
-                
-                // Up
-                if(_fields(mineSquareLocation.Row - 1)(mineSquareLocation.Column).HasMine)
-                {
-                    count = count + 1;
-                }
-                
-                // Up Right
-                if(mineSquareLocation.Column != (dimension.numberOfColumns - 1))
-                {
-                    if(_fields(mineSquareLocation.Row - 1)(mineSquareLocation.Column + 1).HasMine)
-                    {
-                        count = count + 1;
-                    }
-                }
-            }
-            // Right
-            if(mineSquareLocation.Column != (dimension.numberOfColumns - 1))
-            {
-                if(_fields(mineSquareLocation.Row)(mineSquareLocation.Column + 1).HasMine)
-                {
-                    count = count + 1;
-                }
-            }
-            // Down
-            if(mineSquareLocation.Row != (dimension.numberOfRows - 1))
-            {
-                
-                // Down Right
-                if(mineSquareLocation.Column != (dimension.numberOfColumns - 1))
-                {
-                    if(_fields(mineSquareLocation.Row + 1)(mineSquareLocation.Column + 1).HasMine)
-                    {
-                        count = count + 1;
-                    }
-                }
-                
-                // Down
-                if(_fields(mineSquareLocation.Row + 1)(mineSquareLocation.Column).HasMine)
-                {
-                    count = count + 1;
-                }
-                
-                // Down Left
-                if(mineSquareLocation.Column != 0)
-                {
-                    if(_fields(mineSquareLocation.Row + 1)(mineSquareLocation.Column - 1).HasMine)
-                    {
-                        count = count + 1;
-                    }
-                }
-            }
-            // Left
-            if(mineSquareLocation.Column != 0)
-            {
-                if(_fields(mineSquareLocation.Row)(mineSquareLocation.Column - 1).HasMine)
-                {
-                    count = count + 1;
-                }
+                (
+                    location.Row    <  0                         ||
+                    location.Row    >= dimension.numberOfRows    ||
+                    location.Column <  0                         ||
+                    location.Column >= dimension.numberOfColumns
+                )
             }
             
-            count
+            val surroundingSquaresMatrix = Array(
+                    LocationMove(-1,-1), LocationMove(-1, 0), LocationMove(-1, 1),
+                    LocationMove(0, -1),                      LocationMove( 0, 1),
+                    LocationMove(1, -1), LocationMove(1,  0), LocationMove( 1, 1)
+                )
+            
+            
+            surroundingSquaresMatrix
+                .map(
+                    location => 
+                    LocationMove(
+                        location.Row    + mineSquareLocation.Row,
+                        location.Column + mineSquareLocation.Column
+                    )
+                )
+                .filter(location => !isOutOfRange(location)                       )
+                .count (location => _fields(location.Row)(location.Column).HasMine)
         }
+        
         private def _printCovered  (): Unit = {
             _fields.foreach(
                 row => 
